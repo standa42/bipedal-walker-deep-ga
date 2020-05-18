@@ -20,8 +20,8 @@ class GeneticAlgorithm:
             for _ in range(population_size):
                 self.generate_offspring(parents, sigma)
 
-            # TODO roman
             # descending sort
+            new_population.sort(key=lambda x: x.fitness, reverse=True)
 
             elite = self.get_elite(elite, new_population, elitism_evaluations)
 
