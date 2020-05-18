@@ -1,3 +1,5 @@
+import random
+
 from inidividual import Individual
 from network import Network
 
@@ -32,7 +34,7 @@ class GeneticAlgorithm:
             print(f"Generation {g} has elite fitness: {elite.fitness}")
 
     def generate_offspring(self, parents, sigma):
-        chosen_parent = None # TODO: choose one parent  # roman
+        chosen_parent = random.choice(parents)
         offspring = Individual(chosen_parent)
         offspring = self.mutate(offspring)
         offspring.fitness = self.evaluate_fitness(offspring)
