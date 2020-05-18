@@ -1,3 +1,6 @@
+from inidividual import Individual
+from network import Network
+
 class GeneticAlgorithm:
     
     def __init__(self):
@@ -11,12 +14,14 @@ class GeneticAlgorithm:
             print(f"Generation {g} started \r")
             new_population = []
 
-            # TODO: paralelize
+            # TODO roman
+            # paralelize
             parents = population[:truncation_size]
             for _ in range(population_size):
                 self.generate_offspring(parents, sigma)
 
-            # TODO: descending sort
+            # TODO roman
+            # descending sort
 
             elite = self.get_elite(elite, new_population, elitism_evaluations)
 
@@ -27,7 +32,7 @@ class GeneticAlgorithm:
             print(f"Generation {g} has elite fitness: {elite.fitness}")
 
     def generate_offspring(self, parents, sigma):
-        chosen_parent = None # TODO: choose one parent
+        chosen_parent = None # TODO: choose one parent  # roman
         offspring = Individual(chosen_parent)
         offspring = self.mutate(offspring)
         offspring.fitness = self.evaluate_fitness(offspring)
@@ -35,21 +40,21 @@ class GeneticAlgorithm:
 
 
     def init_population(self, population_size):
-        # TODO
+        # TODO honza
         return [None] * population_size
 
     def evaluate_fitness(self, individual):
         """eval network"""
-        # TODO
+        # TODO roman
         pass
 
     def mutate(self, individial, sigma):
         """generate offspring"""
-        # TODO
+        # TODO honza
         pass
 
     def get_elite(self, elite, new_population, elitism_evaluations):
-        # TODO
+        # TODO roman
         # elitism
         # candidates - 10 best + last gen elite
         # choose best candidate according to mean in -elitism_evaluations- evals
