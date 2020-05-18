@@ -48,27 +48,28 @@ class GeneticAlgorithm:
     def evaluate_fitness(self, individual):
         """eval network"""
         # TODO roman
-        pass
+        return 42
 
     def mutate(self, individial, sigma):
         """generate offspring"""
         # TODO honza
         pass
 
-    def get_elite(self, elite, new_population, elitism_evaluations):
+    def get_elite(self, elite, population, elitism_evaluations):
         # TODO roman
         # elitism
         # candidates - 10 best + last gen elite
+        choose_best_count = 10
+        best_from_population = population[:choose_best_count]
+        candidates = best_from_population + [elite]
         # choose best candidate according to mean in -elitism_evaluations- evals
-        pass
+        from statistics import mean
+        for candidate in candidates:
+            candidate_fitnesses = []
+            for _ in elitism_evaluations:
+                candidate_fitnesses.append(self.evaluate_fitness(candidate))
+            candidate.fitness = mean(candidate_fitnesses)
 
-    
-
-
-
-
-
-
-
-
+        import operator
+        new_elite = max(candidates, key=operator.attrgetter('fitness')
 
