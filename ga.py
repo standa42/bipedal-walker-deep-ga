@@ -2,10 +2,13 @@ import random
 
 from inidividual import Individual
 from network import Network
+import tensorflow as tf
 
 class GeneticAlgorithm:
     
     def __init__(self):
+        self._input_shape = (10, )
+        self._outputs = 4
         pass
 
     def fit(self, generation_count, population_size, sigma, truncation_size, elitism_evaluations):
@@ -42,8 +45,15 @@ class GeneticAlgorithm:
 
 
     def init_population(self, population_size):
-        # TODO honza
-        return [None] * population_size
+        max_int = 2 ** 63 - 1
+        population = []
+        for _ in range(population_size):
+            seed = random.randint(0, max_int)
+            network = Network(self._input_shape, self._outputs, seed=seed)
+
+            ind = Individual(network)
+            population.append(ind)
+        return population
 
     def evaluate_fitness(self, individual):
         """eval network"""
