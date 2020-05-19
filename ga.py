@@ -6,10 +6,10 @@ import tensorflow as tf
 
 class GeneticAlgorithm:
     
-    def __init__(self):
+    def __init__(self, threads):
         self._input_shape = (10, )
         self._outputs = 4
-        pass
+        self._threads = threads
 
     def fit(self, generation_count, population_size, sigma, truncation_size, elitism_evaluations):
         """main ga cycle"""
@@ -23,7 +23,11 @@ class GeneticAlgorithm:
             # paralelize
             parents = population[:truncation_size]
             for _ in range(population_size):
-                self.generate_offspring(parents, sigma)
+                offspring = self.generate_offspring(parents, sigma)
+                new_population.append(offspring)
+
+            self.evaluate_pop_fitness(offspring)
+
 
             # descending sort
             new_population.sort(key=lambda x: x.fitness, reverse=True)
@@ -37,10 +41,9 @@ class GeneticAlgorithm:
             print(f"Generation {g} has elite fitness: {elite.fitness}")
 
     def generate_offspring(self, parents, sigma):
-        chosen_parent = random.choice(parents)
-        offspring = Individual(chosen_parent)
-        offspring = self.mutate(offspring)
-        offspring.fitness = self.evaluate_fitness(offspring)
+        chosen_parent: Individual = random.choice(parents)
+        offspring = chosen_parent.clone()
+        self.mutate(offspring, sigma)
         return offspring
 
 
@@ -55,7 +58,7 @@ class GeneticAlgorithm:
             population.append(ind)
         return population
 
-    def evaluate_fitness(self, individual):
+    def evaluate_pop_fitness(self, population):
         """eval network"""
         # TODO roman
         return 42
@@ -84,7 +87,8 @@ class GeneticAlgorithm:
         for candidate in candidates:
             candidate_fitnesses = []
             for _ in elitism_evaluations:
-                candidate_fitnesses.append(self.evaluate_fitness(candidate))
+                # TODO: evaluate n-times
+                pass
             candidate.fitness = mean(candidate_fitnesses)
 
         import operator
