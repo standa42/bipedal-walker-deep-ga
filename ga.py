@@ -72,7 +72,7 @@ class GeneticAlgorithm:
             population.append(ind)
         return population
 
-    def evaluate_fitness(self, individual) -> float:
+    async def evaluate_fitness(self, individual):
         """
         Evaluates fitness of specified individual.
         :param individual: Individual
