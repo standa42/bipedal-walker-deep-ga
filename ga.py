@@ -24,6 +24,7 @@ class GeneticAlgorithm:
     def fit(self, generation_count, population_size, sigma, truncation_size, elitism_evaluations):
         """main ga cycle"""
         population = self.init_population(population_size)
+        elite = None
 
         for g in range(generation_count):
             print(f"Generation {g} started \r")
@@ -38,7 +39,7 @@ class GeneticAlgorithm:
 
 
             # descending sort
-            new_population.sort(key=lambda x: x.fitness, reverse=True)
+            #new_population.sort(key=lambda x: x.fitness, reverse=True)
 
             elite = self.get_elite(elite, new_population, elitism_evaluations)
 
@@ -122,13 +123,16 @@ class GeneticAlgorithm:
         # candidates - 10 best + last gen elite
         choose_best_count = 10
         best_from_population = population[:choose_best_count]
-        candidates = best_from_population + [elite]
+        candidates = best_from_population
+        if elite is not None:
+            candidates.append(elite)
         # choose best candidate according to mean in -elitism_evaluations- evals
         from statistics import mean
         for candidate in candidates:
             candidate_fitnesses = []
-            for _ in elitism_evaluations:
+            for _ in range(elitism_evaluations):
                 # TODO: evaluate n-times
+                candidate_fitnesses.append(self.evaluate_fitness(candidate))
                 pass
             candidate.fitness = mean(candidate_fitnesses)
 

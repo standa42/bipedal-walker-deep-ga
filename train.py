@@ -8,9 +8,13 @@ import argparse
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
+    parser.add_argument("--enviroment_name", default="BipedalWalker-v3", type=str,
+                        help="Name of enviroment in gym")
+    parser.add_argument("--max_episode_length", default=500, type=int,
+                        help="Maximal length of episode")
     parser.add_argument("--generations_count", default=1000, type=float,
                         help="Number of generations for fit.")
-    parser.add_argument("--population_size", default=1000, type=int,
+    parser.add_argument("--population_size", default=10, type=int,
                         help="Size of the population.")
     parser.add_argument("--sigma", default=0.002, type=float)
     parser.add_argument("--truncation_size", default=20, type=int)
@@ -24,7 +28,7 @@ if __name__ == "__main__":
     tf.random.set_seed(args.seed)
     random.seed(args.seed)
 
-    run = GeneticAlgorithm(args.threads)
+    run = GeneticAlgorithm(args.threads, args.enviroment_name, args.max_episode_length)
     run.fit(
         generation_count=args.generations_count,
         population_size=args.population_size,
