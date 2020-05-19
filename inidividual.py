@@ -1,4 +1,12 @@
+from network import Network
+import tensorflow as tf
+
+
 class Individual:
-    def __init__(self, network):
+    def __init__(self, network: Network, fitness: float = 0):
         self.network = network
-        self.fitness = None
+        self.fitness = fitness
+
+    def clone(self):
+        new_individual = Individual(self.network.clone(), self.fitness)
+        return new_individual

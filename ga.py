@@ -63,7 +63,14 @@ class GeneticAlgorithm:
     def mutate(self, individial, sigma):
         """generate offspring"""
         # TODO honza
-        pass
+        network = individial.network
+        weights = network.get_weights()
+
+        modified_weights = []
+        for w in weights:
+            update = tf.random.normal(shape=w.shape, stddev=sigma)
+            modified_weights.append(w + update)
+        network.set_weights(modified_weights)
 
     def get_elite(self, elite, population, elitism_evaluations):
         # TODO roman
@@ -81,5 +88,5 @@ class GeneticAlgorithm:
             candidate.fitness = mean(candidate_fitnesses)
 
         import operator
-        new_elite = max(candidates, key=operator.attrgetter('fitness')
+        new_elite = max(candidates, key=operator.attrgetter('fitness'))
 
