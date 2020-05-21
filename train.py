@@ -7,7 +7,7 @@ import argparse
 import multiprocessing
 
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = "10"
 
 if __name__ == "__main__":
     multiprocessing.set_start_method('spawn')

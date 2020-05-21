@@ -1,4 +1,5 @@
 import random
+from time import time
 
 import numpy as np
 
@@ -11,8 +12,8 @@ from multiprocessing import Pool
 import gym
 gym.logger.set_level(40)
 
+
 class GeneticAlgorithm:
-    
     def __init__(self, threads, env_name: str, max_episode_len: int, seed: int = 42):
         self._seed = seed
         gym = GymEnvironment(env_name)
@@ -26,38 +27,34 @@ class GeneticAlgorithm:
         """main ga cycle"""
         population = self.init_population(population_size)
         elite = None
-        rewritible_padding = ' ' * 50 + '\r'
-        newline_padding = ' ' * 50 + '\n'
 
         for g in range(generation_count):
-            print(f"Generation {g} started ", end=newline_padding)
+            generation_start_time = time()
+            print(f"Generation {g} started ")
             new_population = []
 
-            # TODO roman
             # paralelize
-            print(f"Generation {g} generate offsprings", end=rewritible_padding)
             parents = population[:truncation_size]
             for _ in range(population_size):
                 offspring = self.generate_offspring(parents, sigma)
                 new_population.append(offspring)
+            print(f"Generation {g}: offspring generation, time elapsed: {time() - generation_start_time:.2f}")
 
-            print(f"Generation {g} compute offsprings fitness", end=rewritible_padding)
-
+            start_time = time()
             with Pool(self._threads) as pool:
                 fitnesses = pool.map(self.evaluate_fitness, [ind.network.get_weights() for ind in new_population])
+            print(f"Generation {g}: fitness computation, time elapsed: {time() - start_time:.2f}")
 
             for index in range(len(population)):
                 new_population[index].fitness = fitnesses[index]
 
             # descending sort
-            print(f"\rGeneration {g} sorting offsprings ", end=rewritible_padding)
             new_population.sort(key=lambda x: x.fitness, reverse=True)
 
-            print(f"\rGeneration {g} choosing elite ", end=rewritible_padding)
+            start_time = time()
             elite = self.get_elite(elite, new_population, elitism_evaluations)
+            print(f"\rGeneration {g}: elite chosen, time elapsed: {time() - start_time:.2f}")
 
-            # append elite
-            print(f"\rGeneration {g} appending elite ", end=rewritible_padding)
             try:
                 new_population.remove(elite)
             except ValueError:
@@ -65,7 +62,8 @@ class GeneticAlgorithm:
             new_population = [elite] + new_population
             population = new_population
 
-            print(f"\rGeneration {g} has elite fitness: {elite.fitness}", end=newline_padding)
+            print(f"\rGeneration {g} finished: elite fitness: {elite.fitness}, "
+                  f"total generation time elapsed: {time() - generation_start_time:.2f}")
 
     def generate_offspring(self, parents, sigma):
         """
@@ -144,7 +142,7 @@ class GeneticAlgorithm:
         step = 0
         total_rewards = 0
         while not done:
-            # gym.render()
+            gym.render()
 
             state = np.expand_dims(state, 0)
             action = network.predict(state)[0]
@@ -156,5 +154,9 @@ class GeneticAlgorithm:
 
             if step >= self._max_episode_len:
                 done = True
+        del gym
+        del network
+        del network_weights
+
         return total_rewards
 
