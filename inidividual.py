@@ -7,5 +7,5 @@ class Individual:
         self.fitness = fitness
 
     def clone(self):
-        new_individual = Individual(self.network.clone(), self.fitness)
+        new_individual = Individual(tf.keras.models.clone_model(self.network), self.fitness)
         return new_individual

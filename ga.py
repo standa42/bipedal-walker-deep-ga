@@ -8,6 +8,9 @@ from network import Network
 
 from multiprocessing import Pool
 
+import gym
+gym.logger.set_level(40)
+
 class GeneticAlgorithm:
     
     def __init__(self, threads, env_name: str, max_episode_len: int, seed: int = 42):
@@ -58,8 +61,9 @@ class GeneticAlgorithm:
             try:
                 new_population.remove(elite)
             except ValueError:
-                pass # or scream: thing not in list!
+                new_population = new_population[:-1]
             new_population = [elite] + new_population
+            population = new_population
 
             print(f"\rGeneration {g} has elite fitness: {elite.fitness}", end=newline_padding)
 
@@ -115,9 +119,10 @@ class GeneticAlgorithm:
             candidates.append(elite)
         # choose best candidate according to mean in -elitism_evaluations- evals
         from statistics import mean
-        # for candidate in candidates:
-        #     candidate_fitnesses = self.loop.run_until_complete(self.async_evaluate_elite_fitness(candidate, elitism_evaluations))
-        #     candidate.fitness = mean(candidate_fitnesses)
+        for candidate in candidates:
+            with Pool(self._threads) as pool:
+                candidate_fitnesses = pool.map(self.evaluate_fitness, [ind.network.get_weights() for ind in [candidate] * elitism_evaluations])
+            candidate.fitness = mean(candidate_fitnesses)
 
         import operator
         new_elite = max(candidates, key=operator.attrgetter('fitness'))
@@ -129,7 +134,6 @@ class GeneticAlgorithm:
         :param individual: Individual
         :return: Fitness of the individual
         """
-        while True: continue
 
         network = Network(self._input_shape, self._output_shape, self._seed)
         network.set_weights(network_weights)
