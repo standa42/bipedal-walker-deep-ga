@@ -1,13 +1,10 @@
 import random
 
 import numpy as np
-import tensorflow as tf
 
 from gym_evaluator import GymEnvironment
 from inidividual import Individual
 from network import Network
-
-from utils import batch
 
 from multiprocessing import Pool
 
@@ -102,6 +99,7 @@ class GeneticAlgorithm:
 
         modified_weights = []
         for w in weights:
+            import tensorflow as tf
             update = tf.random.normal(shape=w.shape, stddev=sigma)
             modified_weights.append(w + update)
         network.set_weights(modified_weights)
@@ -131,11 +129,20 @@ class GeneticAlgorithm:
         :param individual: Individual
         :return: Fitness of the individual
         """
-        try:
-            network = Network(input_shape=self._input_shape, output_shape=self._output_shape, seed=self._seed)
-            network.set_weights(network_weights)
-        except Exception as e:
-            print(e)
+        import tensorflow as tf
+
+        input = tf.keras.layers.Input(self._input_shape)
+
+        layer = input
+        layer = tf.keras.layers.Dense(units=100, activation="relu",
+                                      kernel_initializer="zeros")(layer)
+        layer = tf.keras.layers.Dense(units=100, activation="relu",
+                                      kernel_initializer="zeros")(layer)
+
+        output = tf.keras.layers.Dense(units=self._output_shape[0], activation="tanh",
+                                       kernel_initializer="zeros")(layer)
+        network = tf.keras.Model(inputs=input, outputs=output)
+        network.set_weights(network_weights)
 
         gym = GymEnvironment(self._env_name)
         state, done = gym.reset(), False
