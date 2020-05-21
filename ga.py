@@ -129,19 +129,9 @@ class GeneticAlgorithm:
         :param individual: Individual
         :return: Fitness of the individual
         """
-        import tensorflow as tf
+        while True: continue
 
-        input = tf.keras.layers.Input(self._input_shape)
-
-        layer = input
-        layer = tf.keras.layers.Dense(units=100, activation="relu",
-                                      kernel_initializer="zeros")(layer)
-        layer = tf.keras.layers.Dense(units=100, activation="relu",
-                                      kernel_initializer="zeros")(layer)
-
-        output = tf.keras.layers.Dense(units=self._output_shape[0], activation="tanh",
-                                       kernel_initializer="zeros")(layer)
-        network = tf.keras.Model(inputs=input, outputs=output)
+        network = Network(self._input_shape, self._output_shape, self._seed)
         network.set_weights(network_weights)
 
         gym = GymEnvironment(self._env_name)

@@ -4,8 +4,11 @@ import random
 
 from ga import GeneticAlgorithm
 import argparse
+import multiprocessing
 
 if __name__ == "__main__":
+    multiprocessing.set_start_method('spawn')
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--enviroment_name", default="BipedalWalker-v3", type=str,
