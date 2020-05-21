@@ -14,7 +14,7 @@ gym.logger.set_level(40)
 
 
 class GeneticAlgorithm:
-    def __init__(self, threads, env_name: str, max_episode_len: int, seed: int = 42):
+    def __init__(self, threads, env_name: str, max_episode_len: int, render_each: int, seed: int = 42):
         self._seed = seed
         gym = GymEnvironment(env_name)
         self._input_shape = gym.state_shape
@@ -22,6 +22,7 @@ class GeneticAlgorithm:
         self._threads = threads
         self._env_name = env_name
         self._max_episode_len = max_episode_len
+        self._render_each = render_each
 
     def fit(self, generation_count, population_size, sigma, truncation_size, elitism_evaluations):
         """main ga cycle"""
@@ -75,7 +76,6 @@ class GeneticAlgorithm:
         chosen_parent: Individual = random.choice(parents)
         offspring = chosen_parent.clone()
         self.mutate(offspring, sigma)
-        # offspring.fitness = self.evaluate_fitness(offspring)
         return offspring
 
     def init_population(self, population_size):
@@ -140,23 +140,36 @@ class GeneticAlgorithm:
         state, done = gym.reset(), False
 
         step = 0
-        total_rewards = 0
+        equal_steps = 0
+        rewards = []
+        min_equal_steps = 5
         while not done:
-            gym.render()
+            if self._render_each and step % self._render_each == 0:
+                gym.render()
 
             state = np.expand_dims(state, 0)
             action = network.predict(state)[0]
             next_state, reward, done, _ = gym.step(action)
-            total_rewards += reward
+            if np.allclose(state, next_state):
+                equal_steps += 1
+            else:
+                equal_steps = 0
+            rewards.append(reward)
 
             state = next_state
             step += 1
 
             if step >= self._max_episode_len:
                 done = True
+            elif equal_steps >= min_equal_steps:
+                done = True
+                # add expected reward if we waited till the episode would end
+                rewards.append((self._max_episode_len - step) * np.mean(rewards[-min_equal_steps:]))
+
+        total_reward = np.sum(rewards)
         del gym
         del network
         del network_weights
 
-        return total_rewards
+        return total_reward
 

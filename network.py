@@ -18,8 +18,3 @@ class Network(tf.keras.Model):
                                        kernel_initializer=initializer)(layer)
 
         super(Network, self).__init__(inputs=input, outputs=output)
-
-    def clone(self):
-        new_network = tf.keras.models.clone_model(self)
-        new_network.set_weights(self.get_weights())
-        return new_network
