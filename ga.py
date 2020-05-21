@@ -6,6 +6,7 @@ from gym_evaluator import GymEnvironment
 from inidividual import Individual
 from network import Network
 import tensorflow as tf
+import asyncio
 
 from utils import batch
 
@@ -25,29 +26,63 @@ class GeneticAlgorithm:
         """main ga cycle"""
         population = self.init_population(population_size)
         elite = None
+        rewritible_padding = ' ' * 50 + '\r'
+        newline_padding = ' ' * 50 + '\n'
+
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
 
         for g in range(generation_count):
-            print(f"Generation {g} started \r")
+            print(f"Generation {g} started ", end=newline_padding)
             new_population = []
 
             # TODO roman
             # paralelize
+            print(f"Generation {g} generate offsprings", end=rewritible_padding)
             parents = population[:truncation_size]
             for _ in range(population_size):
                 offspring = self.generate_offspring(parents, sigma)
                 new_population.append(offspring)
 
+            print(f"Generation {g} compute offsprings fitness", end=rewritible_padding)
+            fitnesses_futures = self.async_evaluate_population_fitness(new_population)
+            fitnesses = self.loop.run_until_complete(fitnesses_futures)
+            for index in range(len(population)):
+                new_population[index].fitness = fitnesses[index]
 
             # descending sort
-            #new_population.sort(key=lambda x: x.fitness, reverse=True)
+            print(f"\rGeneration {g} sorting offsprings ", end=rewritible_padding)
+            new_population.sort(key=lambda x: x.fitness, reverse=True)
 
+            print(f"\rGeneration {g} choosing elite ", end=rewritible_padding)
             elite = self.get_elite(elite, new_population, elitism_evaluations)
 
             # append elite
-            new_population.remove(elite)
+            print(f"\rGeneration {g} appending elite ", end=rewritible_padding)
+            try:
+                new_population.remove(elite)
+            except ValueError:
+                pass # or scream: thing not in list!
             new_population = [elite] + new_population
 
-            print(f"Generation {g} has elite fitness: {elite.fitness}")
+            print(f"\rGeneration {g} has elite fitness: {elite.fitness}", end=newline_padding)
+
+    async def async_evaluate_elite_fitness(self, elite, elitism_evaluations):
+        tasks = list(map(lambda individual: asyncio.ensure_future(self.evaluate_fitness(individual)), [elite] * elitism_evaluations))
+        future = asyncio.gather(*tasks)
+        return await future
+
+    async def async_evaluate_population_fitness(self, population):
+        
+        tasks = list(map(lambda individual: asyncio.ensure_future(self.evaluate_fitness(individual)), population))
+        future = asyncio.gather(*tasks)
+        return await future
+        
+        #ind = self.init_population(1)[0]
+        #task = asyncio.gather(
+        #    asyncio.ensure_future(self.evaluate_fitness(ind)),
+        #    asyncio.ensure_future(self.evaluate_fitness(ind)))
+        #return await task
 
     def generate_offspring(self, parents, sigma):
         """
@@ -59,7 +94,7 @@ class GeneticAlgorithm:
         chosen_parent: Individual = random.choice(parents)
         offspring = chosen_parent.clone()
         self.mutate(offspring, sigma)
-        offspring.fitness = self.evaluate_fitness(offspring)
+        # offspring.fitness = self.evaluate_fitness(offspring)
         return offspring
 
     def init_population(self, population_size):
@@ -87,7 +122,7 @@ class GeneticAlgorithm:
         step = 0
         total_rewards = 0
         while not done:
-            gym.render()
+            # gym.render()
 
             state = np.expand_dims(state, 0)
             action = network.predict(state)[0]
@@ -129,13 +164,10 @@ class GeneticAlgorithm:
         # choose best candidate according to mean in -elitism_evaluations- evals
         from statistics import mean
         for candidate in candidates:
-            candidate_fitnesses = []
-            for _ in range(elitism_evaluations):
-                # TODO: evaluate n-times
-                candidate_fitnesses.append(self.evaluate_fitness(candidate))
-                pass
+            candidate_fitnesses = self.loop.run_until_complete(self.async_evaluate_elite_fitness(candidate, elitism_evaluations))
             candidate.fitness = mean(candidate_fitnesses)
 
         import operator
         new_elite = max(candidates, key=operator.attrgetter('fitness'))
+        return new_elite
 

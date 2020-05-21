@@ -14,7 +14,8 @@ if __name__ == "__main__":
                         help="Maximal length of episode")
     parser.add_argument("--generations_count", default=1000, type=float,
                         help="Number of generations for fit.")
-    parser.add_argument("--population_size", default=10, type=int,
+    parser.add_argument("--population_size", default=100
+    , type=int,
                         help="Size of the population.")
     parser.add_argument("--sigma", default=0.002, type=float)
     parser.add_argument("--truncation_size", default=20, type=int)
