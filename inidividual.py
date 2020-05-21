@@ -1,9 +1,8 @@
-from network import Network
 import tensorflow as tf
 
 
 class Individual:
-    def __init__(self, network: Network, fitness: float = 0):
+    def __init__(self, network, fitness: float = 0):
         self.network = network
         self.fitness = fitness
 
