@@ -2,11 +2,12 @@ import tensorflow as tf
 
 
 class Network(tf.keras.Model):
-    def __init__(self, input_shape, output_shape, seed):
+    def __init__(self, input_shape, output_shape, seed, initializer=None):
         output_count = output_shape[0]
 
         input = tf.keras.layers.Input(input_shape)
-        initializer = tf.keras.initializers.GlorotNormal(seed=seed)
+        if not initializer:
+            initializer = tf.keras.initializers.GlorotNormal(seed=seed)
 
         layer = input
         layer = tf.keras.layers.Dense(units=100, activation="relu",

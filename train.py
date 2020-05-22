@@ -1,3 +1,5 @@
+import uuid
+
 import numpy as np
 import tensorflow as tf
 import random
@@ -5,6 +7,7 @@ import random
 from ga import GeneticAlgorithm
 import argparse
 import multiprocessing
+from datetime import datetime
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = "10"
@@ -30,12 +33,19 @@ if __name__ == "__main__":
     parser.add_argument("--seed", default=42, type=int)
 
     args = parser.parse_args()
+    args.logdir = os.path.join("logs", f"train_{datetime.now().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4()}")
+
+    print(f"ARGS: {args}")
+    print()
 
     np.random.seed(args.seed)
     tf.random.set_seed(args.seed)
     random.seed(args.seed)
 
-    run = GeneticAlgorithm(args.threads, args.enviroment_name, args.max_episode_length, args.render_each, args.seed)
+    if not os.path.exists(args.logdir):
+        os.makedirs(args.logdir)
+
+    run = GeneticAlgorithm(args.threads, args.enviroment_name, args.max_episode_length, args.render_each, args.logdir, args.seed)
     run.fit(
         generation_count=args.generations_count,
         population_size=args.population_size,

@@ -1,4 +1,5 @@
 import operator
+import os
 import random
 from time import time
 
@@ -11,11 +12,12 @@ from network import Network
 from multiprocessing import Pool
 
 import gym
+import csv
 gym.logger.set_level(40)
 
 
 class GeneticAlgorithm:
-    def __init__(self, threads, env_name: str, max_episode_len: int, render_each: int, seed: int = 42):
+    def __init__(self, threads, env_name: str, max_episode_len: int, render_each: int, logdir, seed: int = 42):
         self._seed = seed
         gym = GymEnvironment(env_name)
         self._input_shape = gym.state_shape
@@ -24,15 +26,17 @@ class GeneticAlgorithm:
         self._env_name = env_name
         self._max_episode_len = max_episode_len
         self._render_each = render_each
+        self._logdir = logdir
 
     def fit(self, generation_count, population_size, sigma, truncation_size, elitism_evaluations):
         """main ga cycle"""
         population = self.init_population(population_size)
         elite = None
+        output_csv_path = os.path.join(self._logdir, "metrics.csv")
 
-        for g in range(generation_count):
+        for g in range(1, generation_count + 1):
             generation_start_time = time()
-            print(f"Generation {g} started ")
+            print(f"GENERATION {g}")
             new_population = []
 
             # paralelize
@@ -40,13 +44,13 @@ class GeneticAlgorithm:
             for _ in range(population_size):
                 offspring = self.generate_offspring(parents, sigma)
                 new_population.append(offspring)
-            print(f"Generation {g}: offspring generation, time elapsed: {time() - generation_start_time:.2f}")
+            print(f"Offspring generation ({time() - generation_start_time:.2f}s)", end="", flush=True)
 
             start_time = time()
             # fitnesses = [self.evaluate_fitness(ind.network.get_weights()) for ind in new_population]
             with Pool(self._threads) as pool:
                 fitnesses = pool.map(self.evaluate_fitness, [ind.network.get_weights() for ind in new_population])
-            print(f"Generation {g}: fitness computation, time elapsed: {time() - start_time:.2f}")
+            print(f"\rFitness computation ({time() - start_time:.2f}s)", end="", flush=True)
 
             for index in range(len(population)):
                 new_population[index].fitness = fitnesses[index]
@@ -56,7 +60,7 @@ class GeneticAlgorithm:
 
             start_time = time()
             elite = self.get_elite(elite, new_population, elitism_evaluations)
-            print(f"\rGeneration {g}: elite chosen, time elapsed: {time() - start_time:.2f}")
+            print(f"\rElite chosen ({time() - start_time:.2f}s)", end="", flush=True)
 
             try:
                 new_population.remove(elite)
@@ -65,7 +69,21 @@ class GeneticAlgorithm:
             new_population = new_population + [elite]
             population = new_population
 
-            print(f"\rGeneration {g} finished, total time {time() - generation_start_time:.2f}: elite fitness:{elite.fitness}")
+            # specify and log metrics
+            fitnesses = np.array([ind.fitness for ind in population])
+
+            mean = np.mean(fitnesses)
+            std = np.std(fitnesses, ddof=1)
+            quantiles = np.quantile(fitnesses, [0.25, 0.5, 0.75])
+            best_fitness = elite.fitness
+            with open(output_csv_path, "a") as file:
+                writer = csv.writer(file, delimiter=",")
+                writer.writerow([best_fitness, mean, std, quantiles[0], quantiles[1], quantiles[2]])
+
+            output_str = f"best: {best_fitness:.4f}, mean: {mean:.4f}, std: {std:.4f}, q1: {quantiles[0]:.4f}, " \
+                         f"q2(med): {quantiles[1]:.4f}, q3: {quantiles[2]:.4f}"
+            print(f"\rGeneration {g} ({time() - generation_start_time:.2f}s): ", output_str, flush=True)
+            print()
 
     def generate_offspring(self, parents, sigma):
         """
@@ -120,6 +138,7 @@ class GeneticAlgorithm:
         for candidate in candidates:
             with Pool(self._threads) as pool:
                 candidate_fitnesses = pool.map(self.evaluate_fitness, [ind.network.get_weights() for ind in [candidate] * elitism_evaluations])
+            candidate_fitnesses.append(candidate.fitness)
             candidate.fitness = np.mean(candidate_fitnesses)
 
         new_elite = max(candidates, key=operator.attrgetter('fitness'))
@@ -132,7 +151,7 @@ class GeneticAlgorithm:
         :return: Fitness of the individual
         """
 
-        network = Network(self._input_shape, self._output_shape, self._seed)
+        network = Network(self._input_shape, self._output_shape, self._seed, initializer="zeros")
         network.set_weights(network_weights)
 
         gym = GymEnvironment(self._env_name)
