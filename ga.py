@@ -81,6 +81,8 @@ class GeneticAlgorithm:
             with open(output_csv_path, "a") as file:
                 writer = csv.writer(file, delimiter=",")
                 writer.writerow([best_fitness, mean, std, quantiles[0], quantiles[1], quantiles[2]])
+            # save network weights of the elite
+            elite.network.save_weights(os.path.join(self._logdir, f"cp-{g}.h5"))
 
             output_str = f"best: {best_fitness:.4f}, mean: {mean:.4f}, std: {std:.4f}, q1: {quantiles[0]:.4f}, " \
                          f"q2(med): {quantiles[1]:.4f}, q3: {quantiles[2]:.4f}"
