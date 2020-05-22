@@ -9,5 +9,13 @@ class Individual:
     def clone(self):
         new_individual = Individual(tf.keras.models.clone_model(self.network), self.fitness)
         new_individual.network.set_weights(self.network.get_weights())
-        assert (new_individual.network.get_weights()[1] == self.network.get_weights()[1]).all()
         return new_individual
+
+    def __str__(self):
+        return f"{self.fitness:.4f}"
+
+    def __repr__(self):
+        if self.fitness:
+            return f"{self.fitness:.4f}"
+
+        return "None"

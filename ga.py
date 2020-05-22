@@ -36,11 +36,11 @@ class GeneticAlgorithm:
 
         for g in range(1, generation_count + 1):
             generation_start_time = time()
-            print(f"GENERATION {g}")
+            print(f"GENERATION {g}", flush=True)
             new_population = []
 
             # paralelize
-            parents = population[:truncation_size]
+            parents = population[-truncation_size:]
             for _ in range(population_size):
                 offspring = self.generate_offspring(parents, sigma)
                 new_population.append(offspring)
@@ -62,11 +62,13 @@ class GeneticAlgorithm:
             elite = self.get_elite(elite, new_population, elitism_evaluations)
             print(f"\rElite chosen ({time() - start_time:.2f}s)", end="", flush=True)
 
+            # remove elite (if it exists) and readd it
             try:
                 new_population.remove(elite)
             except ValueError:
+                # if there's no elite, exclude first member (with worst fitness)
                 new_population = new_population[1:]
-            new_population = new_population + [elite]
+            new_population.append(elite)
             population = new_population
 
             # specify and log metrics
