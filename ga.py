@@ -1,6 +1,9 @@
+import gc
 import operator
 import os
 import random
+import uuid
+import weakref
 from time import time
 
 import numpy as np
@@ -13,11 +16,12 @@ from multiprocessing import Pool
 
 import gym
 import csv
+
 gym.logger.set_level(40)
 
 
 class GeneticAlgorithm:
-    def __init__(self, threads, env_name: str, max_episode_len: int, render_each: int, logdir, seed: int = 42):
+    def __init__(self, threads, env_name: str, max_episode_len: int, render_each: int, logdir, profile_memory: bool, seed: int = 42):
         self._seed = seed
         gym = GymEnvironment(env_name)
         self._input_shape = gym.state_shape
@@ -27,9 +31,13 @@ class GeneticAlgorithm:
         self._max_episode_len = max_episode_len
         self._render_each = render_each
         self._logdir = logdir
+        self._profile_memory = profile_memory
 
     def fit(self, generation_count, population_size, sigma, truncation_size, elitism_evaluations):
         """main ga cycle"""
+        if self._profile_memory:
+            gc.disable()
+
         population = self.init_population(population_size)
         elite = None
         output_csv_path = os.path.join(self._logdir, "metrics.csv")
@@ -45,6 +53,7 @@ class GeneticAlgorithm:
                 offspring = self.generate_offspring(parents, sigma)
                 new_population.append(offspring)
             print(f"Offspring generation ({time() - generation_start_time:.2f}s)", end="", flush=True)
+            del parents
 
             start_time = time()
             # fitnesses = [self.evaluate_fitness(ind.network.get_weights()) for ind in new_population]
@@ -89,6 +98,23 @@ class GeneticAlgorithm:
             print(f"\rGeneration {g} ({time() - generation_start_time:.2f}s): ", output_str, flush=True)
             print()
 
+            gc.collect()
+
+            if self._profile_memory:
+                from pympler import muppy, summary
+                import objgraph
+
+                objgraph.show_backrefs(objgraph.by_type('Individual'),
+                                       max_depth=10, filename=os.path.join(self._logdir, f"ind_{g}{uuid.uuid4()}.png"))
+                gc.collect()
+
+                all_objects = muppy.get_objects()
+                # Prints out a summary of the large objects
+                summary.print_(summary.summarize(all_objects))
+
+                del all_objects
+
+
     def generate_offspring(self, parents, sigma):
         """
         Generates offspring from selected list of parents adding sample from
@@ -96,7 +122,7 @@ class GeneticAlgorithm:
         :param parents: Parents from which offspring will be generated.
         :param sigma: Sigma of normal distribution
         """
-        chosen_parent: Individual = random.choice(parents)
+        chosen_parent: Individual = np.random.choice(parents)
         offspring = chosen_parent.clone()
         self.mutate(offspring, sigma)
         return offspring
