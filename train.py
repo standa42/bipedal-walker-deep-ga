@@ -21,7 +21,7 @@ if __name__ == "__main__":
                         help="Name of enviroment in gym")
     parser.add_argument("--max_episode_length", default=1000, type=int,
                         help="Maximal length of episode")
-    parser.add_argument("--generations_count", default=1000, type=float,
+    parser.add_argument("--generations_count", default=1000, type=int,
                         help="Number of generations for fit.")
     parser.add_argument("--population_size", default=500, type=int, help="Size of the population.")
     parser.add_argument("--sigma", default=0.002, type=float)
