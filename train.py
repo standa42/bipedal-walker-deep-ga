@@ -26,6 +26,7 @@ if __name__ == "__main__":
     parser.add_argument("--population_size", default=500, type=int, help="Size of the population.")
     parser.add_argument("--sigma", default=0.002, type=float)
     parser.add_argument("--truncation_size", default=20, type=int)
+    parser.add_argument("--nn_width", default=50, type=int, help="Size of layer of neural network")
 
     parser.add_argument("--elitism_evaluations", default=10, type=int)
     parser.add_argument("--threads", default=4, type=int)
@@ -45,7 +46,7 @@ if __name__ == "__main__":
     if not os.path.exists(args.logdir):
         os.makedirs(args.logdir)
 
-    run = GeneticAlgorithm(args.threads, args.enviroment_name, args.max_episode_length, args.render_each, args.logdir, args.seed)
+    run = GeneticAlgorithm(args.threads, args.enviroment_name, args.max_episode_length, args.render_each, args.logdir, args.nn_width, args.seed)
     run.fit(
         generation_count=args.generations_count,
         population_size=args.population_size,

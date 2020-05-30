@@ -17,7 +17,7 @@ gym.logger.set_level(40)
 
 
 class GeneticAlgorithm:
-    def __init__(self, threads, env_name: str, max_episode_len: int, render_each: int, logdir, seed: int = 42):
+    def __init__(self, threads, env_name: str, max_episode_len: int, render_each: int, logdir, nn_width: int, seed: int = 42 ):
         self._seed = seed
         gym = GymEnvironment(env_name)
         self._input_shape = gym.state_shape
@@ -27,6 +27,7 @@ class GeneticAlgorithm:
         self._max_episode_len = max_episode_len
         self._render_each = render_each
         self._logdir = logdir
+        self.nn_width = nn_width
 
     def fit(self, generation_count, population_size, sigma, truncation_size, elitism_evaluations):
         """main ga cycle"""
@@ -106,7 +107,7 @@ class GeneticAlgorithm:
         population = []
         for _ in range(population_size):
             seed = random.randint(0, max_int)
-            network = Network(self._input_shape, self._output_shape, seed=seed)
+            network = Network(self._input_shape, self._output_shape, seed=seed, nn_width=self.nn_width)
 
             ind = Individual(network)
             population.append(ind)
@@ -155,7 +156,7 @@ class GeneticAlgorithm:
         :return: Fitness of the individual
         """
 
-        network = Network(self._input_shape, self._output_shape, self._seed, initializer="zeros")
+        network = Network(self._input_shape, self._output_shape, self._seed, nn_width=self.nn_width, initializer="zeros")
         network.set_weights(network_weights)
 
         gym = GymEnvironment(self._env_name)
