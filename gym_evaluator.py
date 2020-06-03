@@ -9,9 +9,9 @@ class GymEnvironment:
     """
     Credits to Milan Straka.
     """
-    def __init__(self, env, separators=None, tiles=None):
+    def __init__(self, env, seed=42, separators=None, tiles=None):
         self._env = gym.make(env)
-        self._env.seed(42)
+        self._env.seed(seed)
 
         self._separators = separators
         self._tiles = tiles

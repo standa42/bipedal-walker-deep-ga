@@ -10,6 +10,8 @@ from inidividual import Individual
 from network import Network
 
 from multiprocessing import Pool
+import tensorflow as tf
+import gc
 
 import gym
 import csv
@@ -17,7 +19,7 @@ gym.logger.set_level(40)
 
 
 class GeneticAlgorithm:
-    def __init__(self, threads, env_name: str, max_episode_len: int, render_each: int, logdir, nn_width: int, seed: int = 42 ):
+    def __init__(self, threads, env_name: str, max_episode_len: int, elite_choose_best_count: int, render_each: int, logdir, nn_width: int, seed: int = 42 ):
         self._seed = seed
         gym = GymEnvironment(env_name)
         self._input_shape = gym.state_shape
@@ -25,6 +27,7 @@ class GeneticAlgorithm:
         self._threads = threads
         self._env_name = env_name
         self._max_episode_len = max_episode_len
+        self._elite_choose_best_count = elite_choose_best_count
         self._render_each = render_each
         self._logdir = logdir
         self.nn_width = nn_width
@@ -48,9 +51,12 @@ class GeneticAlgorithm:
             print(f"Offspring generation ({time() - generation_start_time:.2f}s)", end="", flush=True)
 
             start_time = time()
-            # fitnesses = [self.evaluate_fitness(ind.network.get_weights()) for ind in new_population]
+            max_int = 2 ** 63 - 1
+            # fitnesses = [self.evaluate_fitness(
+            #     (ind.network.get_weights(), random.randint(0, max_int))) for ind in new_population]
             with Pool(self._threads) as pool:
-                fitnesses = pool.map(self.evaluate_fitness, [ind.network.get_weights() for ind in new_population])
+                fitnesses = pool.map(self.evaluate_fitness, [
+                    (ind.network.get_weights(), random.randint(0, max_int)) for ind in new_population])
             print(f"\rFitness computation ({time() - start_time:.2f}s)", end="", flush=True)
 
             for index in range(len(population)):
@@ -68,7 +74,7 @@ class GeneticAlgorithm:
                 new_population.remove(elite)
             except ValueError:
                 # if there's no elite, exclude first member (with worst fitness)
-                new_population = new_population[1:]
+                new_population.pop(0)
             new_population.append(elite)
             population = new_population
 
@@ -89,6 +95,9 @@ class GeneticAlgorithm:
                          f"q2(med): {quantiles[1]:.4f}, q3: {quantiles[2]:.4f}"
             print(f"\rGeneration {g} ({time() - generation_start_time:.2f}s): ", output_str, flush=True)
             print()
+
+            gc.collect()
+            tf.keras.backend.clear_session()
 
     def generate_offspring(self, parents, sigma):
         """
@@ -125,41 +134,43 @@ class GeneticAlgorithm:
 
         modified_weights = []
         for w in weights:
-            import tensorflow as tf
             update = tf.random.normal(shape=w.shape, stddev=sigma)
             modified_weights.append(w + update)
         network.set_weights(modified_weights)
 
     def get_elite(self, elite, population, elitism_evaluations):
-        # TODO roman
         # elitism
         # candidates - 10 best + last gen elite
-        choose_best_count = 10
+        max_int = 2 ** 63 - 1
+        choose_best_count = self._elite_choose_best_count
         best_from_population = population[-choose_best_count:]
         candidates = best_from_population
         if elite is not None:
             candidates.append(elite)
         # choose best candidate according to mean in -elitism_evaluations- evals
         for candidate in candidates:
+            # candidate_fitnesses = [self.evaluate_fitness((ind.network.get_weights(), random.randint(0, max_int)))
+            #                        for ind in [candidate] * elitism_evaluations]
             with Pool(self._threads) as pool:
-                candidate_fitnesses = pool.map(self.evaluate_fitness, [ind.network.get_weights() for ind in [candidate] * elitism_evaluations])
+                candidate_fitnesses = pool.map(self.evaluate_fitness, [
+                    (ind.network.get_weights(), random.randint(0, max_int)) for ind in [candidate] * elitism_evaluations])
             candidate_fitnesses.append(candidate.fitness)
             candidate.fitness = np.mean(candidate_fitnesses)
 
         new_elite = max(candidates, key=operator.attrgetter('fitness'))
         return new_elite
 
-    def evaluate_fitness(self, network_weights):
+    def evaluate_fitness(self, params):
         """
         Evaluates fitness of specified individual.
-        :param individual: Individual
         :return: Fitness of the individual
         """
-
-        network = Network(self._input_shape, self._output_shape, self._seed, nn_width=self.nn_width, initializer="zeros")
+        network_weights = params[0]
+        seed = params[1]
+        network = Network(self._input_shape, self._output_shape, seed, nn_width=self.nn_width, initializer="zeros")
         network.set_weights(network_weights)
 
-        gym = GymEnvironment(self._env_name)
+        gym = GymEnvironment(self._env_name, seed=seed)
         state, done = gym.reset(), False
 
         # start_time = time()
@@ -193,55 +204,5 @@ class GeneticAlgorithm:
         # print(f"Total steps {step}: {time() - start_time:.4f}")
 
         total_reward = np.sum(rewards)
-        del gym
-        del network
-        del network_weights
 
         return total_reward
-
-    # def evaluate_fitness_parallel(self, network_weights, evaluation_count):
-    #     network = Network(self._input_shape, self._output_shape, self._seed)
-    #     network.set_weights(network_weights)
-    # 
-    #     with GymEnvironment(self._env_name) as gym:
-    #         states, done = gym.parallel_init(evaluation_count), False
-    # 
-    #         # start_time = time()
-    # 
-    #         step = 0
-    #         equal_steps = 0
-    #         all_rewards = []
-    #         all_dones = []
-    #         min_equal_steps = 5
-    #         while not done:
-    #             if self._render_each and step % self._render_each == 0:
-    #                 gym.render()
-    # 
-    #             states = np.array(states)
-    #             actions = network(states).numpy()
-    #             next_states, rewards, dones, _ = zip(*gym.parallel_step(actions))
-    #             if np.allclose(states, next_states):
-    #                 equal_steps += 1
-    #             else:
-    #                 equal_steps = 0
-    #             all_rewards.append(rewards)
-    #             all_dones.append(dones)
-    # 
-    #             states = next_states
-    #             step += 1
-    # 
-    #             done = np.all(dones)
-    # 
-    #             if step >= self._max_episode_len:
-    #                 done = True
-    #             elif equal_steps >= min_equal_steps:
-    #                 done = True
-    #                 # add expected reward if we waited till the episode would end
-    #                 all_rewards.append((self._max_episode_len - step) * np.mean(all_rewards[-min_equal_steps:], axis=0))
-    #         # print(f"Total steps {step}: {time() - start_time:.4f}")
-    # 
-    #         total_rewards = np.sum(all_rewards, axis=0)
-    #     del network
-    #     del network_weights
-    # 
-    #     return total_rewards

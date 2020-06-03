@@ -8,7 +8,7 @@ from network import Network
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--enviroment_name", default="BipedalWalker-v3", type=str,
+    parser.add_argument("--environment_name", default="BipedalWalker-v3", type=str,
                         help="Name of enviroment in gym")
     parser.add_argument("--render_each", default=1, type=int)
     parser.add_argument("--nn_width", default=50, type=int, help="Size of layer of neural network")
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     print(f"ARGS: {args}")
     print()
 
-    gym = GymEnvironment(args.enviroment_name)
+    gym = GymEnvironment(args.environment_name)
     input_shape = gym.state_shape
     output_shape = gym.action_shape
 
