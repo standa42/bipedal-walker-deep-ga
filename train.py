@@ -21,14 +21,15 @@ if __name__ == "__main__":
                         help="Name of enviroment in gym")
     parser.add_argument("--max_episode_length", default=1000, type=int,
                         help="Maximal length of episode")
-    parser.add_argument("--generations_count", default=1000, type=int,
+    parser.add_argument("--generations_count", default=1500, type=int,
                         help="Number of generations for fit.")
-    parser.add_argument("--population_size", default=500, type=int, help="Size of the population.")
-    parser.add_argument("--sigma", default=0.002, type=float)
+    parser.add_argument("--population_size", default=250, type=int, help="Size of the population.")
+    parser.add_argument("--sigma", default=0.01, type=float)
+    parser.add_argument("--sigma_final", default=None, type=float)
     parser.add_argument("--truncation_size", default=20, type=int)
     parser.add_argument("--nn_width", default=50, type=int, help="Size of layer of neural network")
 
-    parser.add_argument("--elitism_evaluations", default=10, type=int)
+    parser.add_argument("--elitism_evaluations", default=15, type=int)
     parser.add_argument("--elite_choose_best_count", default=10, type=int)
     parser.add_argument("--threads", default=4, type=int)
     parser.add_argument("--render_each", default=None, type=int)
@@ -54,7 +55,8 @@ if __name__ == "__main__":
         population_size=args.population_size,
         sigma=args.sigma,
         truncation_size=args.truncation_size,
-        elitism_evaluations=args.elitism_evaluations
+        elitism_evaluations=args.elitism_evaluations,
+        sigma_final=args.sigma_final
     )
 
 

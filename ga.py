@@ -32,13 +32,17 @@ class GeneticAlgorithm:
         self._logdir = logdir
         self.nn_width = nn_width
 
-    def fit(self, generation_count, population_size, sigma, truncation_size, elitism_evaluations):
+    def fit(self, generation_count, population_size, sigma, truncation_size, elitism_evaluations, sigma_final=None):
         """main ga cycle"""
         population = self.init_population(population_size)
         elite = None
         output_csv_path = os.path.join(self._logdir, "metrics.csv")
+        if not sigma_final:
+            sigma_final = sigma
+        sigmas = np.linspace(sigma, sigma_final, generation_count)
 
         for g in range(1, generation_count + 1):
+            sigma = sigmas[g]
             generation_start_time = time()
             print(f"GENERATION {g}", flush=True)
             new_population = []
