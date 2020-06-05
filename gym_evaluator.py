@@ -3,15 +3,18 @@ import sys
 
 import gym
 import numpy as np
-
+import gym.wrappers
 
 class GymEnvironment:
     """
     Credits to Milan Straka.
     """
-    def __init__(self, env, seed=42, separators=None, tiles=None):
+    def __init__(self, env, seed=42, separators=None, tiles=None, out_video_dir: str = None):
         self._env = gym.make(env)
         self._env.seed(seed)
+
+        if out_video_dir:
+            self._env = gym.wrappers.Monitor(self._env, out_video_dir, force=True)
 
         self._separators = separators
         self._tiles = tiles
@@ -142,57 +145,6 @@ class GymEnvironment:
 
         return self._maybe_discretize(observation), reward, done, info
 
-    def parallel_init(self, environments):
-        import atexit
-        import multiprocessing
-
-        if self._workers is not None:
-            raise RuntimeError("The parallel_init method already called")
-
-        workers = []
-        for i in range(environments):
-            connection, connection_worker = multiprocessing.Pipe()
-            worker = multiprocessing.Process(target=GymEnvironment._parallel_worker, args=(self, self._env.spec.id, 43 + i, connection_worker))
-            worker.start()
-            workers.append((connection, worker))
-        self._workers = workers
-
-        import atexit
-        atexit.register(lambda: [worker.terminate() for _, worker in self._workers])
-
-        states = []
-        for connection, _ in self._workers:
-            states.append(connection.recv())
-
-        return states
-
-    @staticmethod
-    def _parallel_worker(parent, env, seed, connection):
-        env = gym.make(env)
-        env.seed(seed)
-
-        connection.send(parent._maybe_discretize(env.reset()))
-        try:
-            while True:
-                action = connection.recv()
-                state, reward, done, info = env.step(action)
-                if done: state = env.reset()
-                connection.send((parent._maybe_discretize(state), reward, done, info))
-        except KeyboardInterrupt:
-            pass
-
-    def parallel_step(self, actions):
-        if self._workers is None:
-            raise RuntimeError("The parallel_init method was not called before parallel_step")
-
-        for action, (connection, _) in zip(actions, self._workers):
-            connection.send(action)
-
-        results = []
-        for connection, _ in self._workers:
-            results.append(connection.recv())
-        return results
-
     def render(self):
         self._env.render()
 
@@ -200,6 +152,4 @@ class GymEnvironment:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self._workers:
-            for connection, process in self._workers:
-                process.terminate()
+        self._env.close()

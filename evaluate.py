@@ -15,8 +15,9 @@ if __name__ == "__main__":
     parser.add_argument("--render_each", default=1, type=int)
     parser.add_argument("--nn_width", default=50, type=int, help="Size of layer of neural network")
     parser.add_argument("--weights_file", default="model.h5", type=str)
-    parser.add_argument("--seed", default=42, type=int)
+    parser.add_argument("--seed", default=10, type=int)
     parser.add_argument("--iterations", default=1, type=int)
+    parser.add_argument("--out_video_dir", default="logs", type=str)
 
     args = parser.parse_args()
 
@@ -27,7 +28,7 @@ if __name__ == "__main__":
     print(f"ARGS: {args}")
     print()
 
-    gym = GymEnvironment(args.environment_name, seed=args.seed)
+    gym = GymEnvironment(args.environment_name, seed=args.seed, out_video_dir=args.out_video_dir)
     input_shape = gym.state_shape
     output_shape = gym.action_shape
 
