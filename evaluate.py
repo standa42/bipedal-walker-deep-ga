@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     all_returns = []
     for _ in range(args.iterations):
-        state, done = gym.reset(), False
+        state, done = gym.reset(True), False
 
         step = 0
         rewards = []
