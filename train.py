@@ -19,8 +19,10 @@ if __name__ == "__main__":
 
     parser.add_argument("--environment_name", default="BipedalWalker-v3", type=str,
                         help="Name of enviroment in gym")
-    parser.add_argument("--max_episode_length", default=1000, type=int,
+    parser.add_argument("--max_episode_length", default=400, type=int,
                         help="Maximal length of episode")
+    parser.add_argument("--max_episode_length_final", default=None, type=int,
+                        help="Maximal length of episode after all generations")
     parser.add_argument("--generations_count", default=1500, type=int,
                         help="Number of generations for fit.")
     parser.add_argument("--population_size", default=250, type=int, help="Size of the population.")
@@ -51,6 +53,7 @@ if __name__ == "__main__":
         os.makedirs(args.logdir)
 
     run = GeneticAlgorithm(threads=args.threads, env_name=args.environment_name, max_episode_len=args.max_episode_length,
+                           max_episode_len_final=args.max_episode_length_final,
                            min_equal_steps=args.min_equal_steps, elite_choose_best_count=args.elite_choose_best_count,
                            render_each=args.render_each, logdir=args.logdir, nn_width=args.nn_width, seed=args.seed)
     run.fit(

@@ -19,8 +19,11 @@ gym.logger.set_level(40)
 
 
 class GeneticAlgorithm:
-    def __init__(self, threads, env_name: str, max_episode_len: int, elite_choose_best_count: int, min_equal_steps: int,
-                 render_each: int, logdir, nn_width: int, seed: int = 42):
+    def __init__(self, threads, env_name: str, max_episode_len: int,
+                 elite_choose_best_count: int, min_equal_steps: int,
+                 render_each: int, logdir, nn_width: int,
+                 max_episode_len_final: int = None,
+                 seed: int = 42):
         self._seed = seed
         gym = GymEnvironment(env_name)
         self._input_shape = gym.state_shape
@@ -28,6 +31,11 @@ class GeneticAlgorithm:
         self._threads = threads
         self._env_name = env_name
         self._max_episode_len = max_episode_len
+        if max_episode_len_final is None:
+            self._max_episode_len_final = max_episode_len
+        else:
+            self._max_episode_len_final = max_episode_len_final
+
         self._elite_choose_best_count = elite_choose_best_count
         self._min_equal_steps = min_equal_steps
         self._render_each = render_each
@@ -42,9 +50,13 @@ class GeneticAlgorithm:
         if not sigma_final:
             sigma_final = sigma
         sigmas = np.linspace(sigma, sigma_final, generation_count)
+        curr_episode_lens = np.linspace(self._max_episode_len, self._max_episode_len_final, generation_count)
+        curr_episode_lens = (curr_episode_lens // 100).astype(np.int32) * 100
 
         for g in range(1, generation_count + 1):
             sigma = sigmas[g]
+            self._curr_max_episode_len = curr_episode_lens[g]
+
             generation_start_time = time()
             print(f"GENERATION {g}", flush=True)
             new_population = []
@@ -201,12 +213,12 @@ class GeneticAlgorithm:
             state = next_state
             step += 1
 
-            if step >= self._max_episode_len:
+            if step >= self._curr_max_episode_len:
                 done = True
             elif self._min_equal_steps > 0 and equal_steps >= self._min_equal_steps:
                 done = True
                 # add expected reward if we waited till the episode would end
-                rewards.append((self._max_episode_len - step) * np.mean(rewards[-self._min_equal_steps:]))
+                rewards.append((self._curr_max_episode_len - step) * np.mean(rewards[-self._min_equal_steps:]))
         # print(f"Total steps {step}: {time() - start_time:.4f}")
 
         total_reward = np.sum(rewards)
