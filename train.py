@@ -33,6 +33,8 @@ if __name__ == "__main__":
     parser.add_argument("--elite_choose_best_count", default=10, type=int)
     parser.add_argument("--threads", default=4, type=int)
     parser.add_argument("--render_each", default=None, type=int)
+    parser.add_argument("--min_equal_steps", default=5, type=bool, help="Specifies number of equal states in evaluation "
+                                                                        "after which it will be cut off and estimated.")
     parser.add_argument("--seed", default=42, type=int)
 
     args = parser.parse_args()
@@ -48,8 +50,9 @@ if __name__ == "__main__":
     if not os.path.exists(args.logdir):
         os.makedirs(args.logdir)
 
-    run = GeneticAlgorithm(args.threads, args.environment_name, args.max_episode_length, args.elite_choose_best_count,
-                           args.render_each, args.logdir, args.nn_width, args.seed)
+    run = GeneticAlgorithm(threads=args.threads, env_name=args.environment_name, max_episode_len=args.max_episode_length,
+                           min_equal_steps=args.min_equal_steps, elite_choose_best_count=args.elite_choose_best_count,
+                           render_each=args.render_each, logdir=args.logdir, nn_width=args.nn_width, seed=args.seed)
     run.fit(
         generation_count=args.generations_count,
         population_size=args.population_size,

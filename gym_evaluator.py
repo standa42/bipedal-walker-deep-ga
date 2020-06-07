@@ -5,6 +5,7 @@ import gym
 import numpy as np
 import gym.wrappers
 
+
 class GymEnvironment:
     """
     Credits to Milan Straka.
