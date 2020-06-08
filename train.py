@@ -33,7 +33,7 @@ if __name__ == "__main__":
     parser.add_argument("--elite_choose_best_count", default=10, type=int)
     parser.add_argument("--threads", default=4, type=int)
     parser.add_argument("--render_each", default=None, type=int)
-    parser.add_argument("--min_equal_steps", default=5, type=bool, help="Specifies number of equal states in evaluation "
+    parser.add_argument("--min_equal_steps", default=5, type=int, help="Specifies number of equal states in evaluation "
                                                                         "after which it will be cut off and estimated.")
     parser.add_argument("--seed", default=42, type=int)
 
