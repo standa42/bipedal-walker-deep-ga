@@ -19,23 +19,23 @@ if __name__ == "__main__":
 
     parser.add_argument("--environment_name", default="BipedalWalker-v3", type=str,
                         help="Name of enviroment in gym")
-    parser.add_argument("--max_episode_length", default=1000, type=int,
+    parser.add_argument("--max_episode_length", default=1600, type=int,
                         help="Maximal length of episode")
-    parser.add_argument("--generations_count", default=1500, type=int,
+    parser.add_argument("--generations_count", default=1000, type=int,
                         help="Number of generations for fit.")
-    parser.add_argument("--population_size", default=250, type=int, help="Size of the population.")
-    parser.add_argument("--sigma", default=0.01, type=float)
+    parser.add_argument("--population_size", default=200, type=int, help="Size of the population.")
+    parser.add_argument("--sigma", default=0.018, type=float)
     parser.add_argument("--sigma_final", default=None, type=float)
     parser.add_argument("--truncation_size", default=20, type=int)
-    parser.add_argument("--nn_width", default=50, type=int, help="Size of layer of neural network")
+    parser.add_argument("--nn_width", default=75, type=int, help="Size of layer of neural network")
 
-    parser.add_argument("--elitism_evaluations", default=15, type=int)
+    parser.add_argument("--elitism_evaluations", default=7, type=int)
     parser.add_argument("--elite_choose_best_count", default=10, type=int)
     parser.add_argument("--threads", default=4, type=int)
     parser.add_argument("--render_each", default=None, type=int)
-    parser.add_argument("--min_equal_steps", default=5, type=int, help="Specifies number of equal states in evaluation "
+    parser.add_argument("--min_equal_steps", default=0, type=int, help="Specifies number of equal states in evaluation "
                                                                         "after which it will be cut off and estimated.")
-    parser.add_argument("--seed", default=42, type=int)
+    parser.add_argument("--seed", default=1452, type=int)
 
     args = parser.parse_args()
     args.logdir = os.path.join("logs", f"train_{datetime.now().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4()}")
