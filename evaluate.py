@@ -13,7 +13,7 @@ if __name__ == "__main__":
     parser.add_argument("--environment_name", default="BipedalWalker-v3", type=str,
                         help="Name of enviroment in gym")
     parser.add_argument("--render_each", default=None, type=int)
-    parser.add_argument("--nn_width", default=50, type=int, help="Size of layer of neural network")
+    parser.add_argument("--nn_width", default=75, type=int, help="Size of layer of neural network")
     parser.add_argument("--weights_file", default="model.h5", type=str)
     parser.add_argument("--seed", default=10, type=int)
     parser.add_argument("--iterations", default=100, type=int)
