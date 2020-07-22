@@ -27,7 +27,7 @@ venv/bin/python3 -m pip install -r "requirements.txt"
 ## How to train a model
 Training is simple using following script:
 ```shell script
-/venv/bin/python3 train.py
+venv/bin/python3 train.py
 ```
 
 Default parameters are already set for the best reached model.
@@ -36,7 +36,7 @@ Logs are stored into *logs/train{TIMESTAMP}_{UUID4_CODE}* directory.
 ## How to evaluate a model
 Evaluation of model is done using following script:
 ```shell script
-/venv/bin/python3 evaluate.py
+venv/bin/python3 evaluate.py
 ```
 
 Evaluation can be visualized using *render_each* parameter.
